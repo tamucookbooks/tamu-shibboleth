@@ -5,6 +5,8 @@ Setup a shibboleth service provide in TAMU federation.
 Requirements
 ------------
 
+RHEL/CentOS/Oracle Linux 6
+
 Attributes
 ----------
 
