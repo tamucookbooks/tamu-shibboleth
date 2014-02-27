@@ -1,0 +1,17 @@
+<Attributes xmlns="urn:mace:shibboleth:2.0:attribute-map" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<% @attributes.each do |name, prop| -%>
+<% if prop.attribute?('decoder') -%>
+  <Attribute name="<%=name-%>" id="<%=prop['id']-%>">
+<% if prop.attribute?('formatter') -%>
+    <AttributeDecoder xsi:type="<%=prop['decoder']-%>" formatter="<%=prop['formatter']-%>"/>
+<% elsif prop.attribute?('case') #if formatter -%>
+    <AttributeDecoder xsi:type="<%=prop['decoder']-%>" caseSensitive="<%=prop['case']-%>"/>
+<% else #if formatter -%>
+    <AttributeDecoder xsi:type="<%=prop['decoder']-%>"/>
+<% end #if formatter -%>
+  </Attribute>
+<% else #if decoder -%>
+  <Attribute name="<%=name-%>" id="<%=prop['id']-%>"/>
+<% end #if decoder -%>
+<% end #each -%>
+</Attributes>

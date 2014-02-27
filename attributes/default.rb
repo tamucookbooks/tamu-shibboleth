@@ -1,0 +1,15 @@
+default['shibboleth']['conf'] = '/etc/shibboleth/shibboleth2.xml'
+default['shibboleth']['admin'] = 'no-reply@tamu.edu'
+default['shibboleth']['servername'] = 'server.tamu.edu'
+default['shibboleth']['proxy']['preserve'] = true 
+default['shibboleth']['proxy']['hosts'] = {}
+default['shibboleth']['auths'] = []
+default['shibboleth']['wayf']['enable'] = false
+default['shibboleth']['wayf']['address'] = 'https://wayf.tamu.edu/'
+default['shibboleth']['fedcert'] = 'https://idp.tamu.edu/federation.tamu.edu.crt'
+default['shibboleth']['user'] = 'shibd'
+default['shibboleth']['group'] = 'shibd'
+default['shibboleth']['attributes'] = {}
+default['shibboleth']['idp'] = 'prod'
+default['shibboleth']['certrepo'] = 'http://private.server/cert/'
+default['shibboleth']['fetchcert'] = true

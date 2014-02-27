@@ -1,0 +1,170 @@
+ServerRoot "/usr"
+
+Listen 80
+Listen 81
+
+LoadModule authn_file_module lib64/httpd/modules/mod_authn_file.so
+LoadModule authn_core_module lib64/httpd/modules/mod_authn_core.so
+LoadModule authz_host_module lib64/httpd/modules/mod_authz_host.so
+LoadModule authz_groupfile_module lib64/httpd/modules/mod_authz_groupfile.so
+LoadModule authz_user_module lib64/httpd/modules/mod_authz_user.so
+LoadModule authz_core_module lib64/httpd/modules/mod_authz_core.so
+LoadModule access_compat_module lib64/httpd/modules/mod_access_compat.so
+LoadModule auth_basic_module lib64/httpd/modules/mod_auth_basic.so
+LoadModule reqtimeout_module lib64/httpd/modules/mod_reqtimeout.so
+LoadModule filter_module lib64/httpd/modules/mod_filter.so
+LoadModule mime_module lib64/httpd/modules/mod_mime.so
+LoadModule log_config_module lib64/httpd/modules/mod_log_config.so
+LoadModule env_module lib64/httpd/modules/mod_env.so
+LoadModule headers_module lib64/httpd/modules/mod_headers.so
+LoadModule setenvif_module lib64/httpd/modules/mod_setenvif.so
+LoadModule version_module lib64/httpd/modules/mod_version.so
+LoadModule proxy_module lib64/httpd/modules/mod_proxy.so
+LoadModule proxy_connect_module lib64/httpd/modules/mod_proxy_connect.so
+LoadModule proxy_http_module lib64/httpd/modules/mod_proxy_http.so
+LoadModule proxy_fcgi_module lib64/httpd/modules/mod_proxy_fcgi.so
+LoadModule proxy_scgi_module lib64/httpd/modules/mod_proxy_scgi.so
+LoadModule proxy_ajp_module lib64/httpd/modules/mod_proxy_ajp.so
+LoadModule proxy_wstunnel_module lib64/httpd/modules/mod_proxy_wstunnel.so
+LoadModule lbmethod_byrequests_module lib64/httpd/modules/mod_lbmethod_byrequests.so
+LoadModule lbmethod_bytraffic_module lib64/httpd/modules/mod_lbmethod_bytraffic.so
+LoadModule lbmethod_bybusyness_module lib64/httpd/modules/mod_lbmethod_bybusyness.so
+LoadModule lbmethod_heartbeat_module lib64/httpd/modules/mod_lbmethod_heartbeat.so
+LoadModule unixd_module lib64/httpd/modules/mod_unixd.so
+LoadModule autoindex_module lib64/httpd/modules/mod_autoindex.so
+LoadModule dir_module lib64/httpd/modules/mod_dir.so
+LoadModule alias_module lib64/httpd/modules/mod_alias.so
+LoadModule rewrite_module lib64/httpd/modules/mod_rewrite.so
+LoadModule mpm_prefork_module lib64/httpd/modules/mod_mpm_prefork.so
+
+<IfModule unixd_module>
+User apache
+Group apache
+</IfModule>
+
+ServerAdmin yli@library.tamu.edu
+
+ServerName <%= @node['hostname'] %>
+
+ServerAdmin <%= @node['shibboleth']['admin'] %>
+
+ServerName sp1
+
+<Directory />
+    AllowOverride none
+    Require all denied
+</Directory>
+
+DocumentRoot "/var/www/html"
+<Directory "/var/www/html">
+    Options Indexes FollowSymLinks
+    AllowOverride None
+    Require all granted
+</Directory>
+
+<IfModule dir_module>
+    DirectoryIndex index.html
+</IfModule>
+
+<Files ".ht*">
+    Require all denied
+</Files>
+
+ErrorLog "/var/log/httpd/error_log"
+LogLevel warn
+
+<IfModule log_config_module>
+    LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+    LogFormat "%h %l %u %t \"%r\" %>s %b" common
+
+    <IfModule logio_module>
+      # You need to enable mod_logio.c to use %I and %O
+      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+    </IfModule>
+
+    # CustomLog "logs/access_log" common
+
+   CustomLog "/var/log/httpd/access_log" combined
+</IfModule>
+
+<IfModule mime_module>
+    TypesConfig /etc/httpd/conf/mime.types
+
+    AddType application/x-compress .Z
+    AddType application/x-gzip .gz .tgz
+    #AddType text/html .shtml
+    #AddOutputFilter INCLUDES .shtml
+</IfModule>
+
+Include /etc/httpd/conf/extra/httpd-mpm.conf
+
+# Configure mod_proxy_html to understand HTML4/XHTML1
+<IfModule proxy_html_module>
+Include /etc/httpd/conf/extra/proxy-html.conf
+</IfModule>
+
+# Deal with user agents that deliberately violate open standards
+#
+<IfModule setenvif_module>
+BrowserMatch "MSIE 10.0;" bad_DNT
+</IfModule>
+<IfModule headers_module>
+RequestHeader unset DNT env=bad_DNT
+</IfModule>
+
+RewriteEngine on
+RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)
+RewriteRule .* - [F]
+
+LoadModule mod_shib /usr/lib64/shibboleth/mod_shib_24.so
+
+ShibCompatValidUser Off
+
+<Location /Shibboleth.sso>
+  AuthType None
+  Require all granted
+</Location>
+
+<IfModule mod_alias.c>
+  <Location /shibboleth-sp>
+    AuthType None
+    Require all granted
+  </Location>
+  Alias /shibboleth-sp/main.css /usr/share/shibboleth/main.css
+</IfModule>
+
+ShibConfig <%= @node['shibboleth']['conf'] %>
+
+<VirtualHost *:80>
+  ServerAdmin <%= @node['shibboleth']['admin'] %>
+  ServerName <%= @node['shibboleth']['servername'] %>
+  RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI}
+  <% proxy = @node['shibboleth']['proxy'] -%>
+  <% if proxy.attribute?('preserve') and proxy['preserve'] -%>
+  ProxyPreserveHost On
+  <% end -%>
+</VirtualHost>
+
+<VirtualHost *:81>
+  ServerAdmin <%= @node['shibboleth']['admin'] %>
+  ServerName https://<%= @node['shibboleth']['servername'] %>:443
+  SetEnv HTTPS on
+  ShibURLScheme https
+  ProxyPass /Shibboleth.sso !
+  <% if proxy.attribute?('hosts') -%>
+  <% proxy['hosts'].each do |url,addr| -%>
+  ProxyPass <%=url-%> <%=addr%>
+  <% end #each -%>
+  <% end #if -%>
+  <% if proxy.attribute?('preserve') and proxy['preserve'] -%>
+  ProxyPreserveHost On
+  <% end -%>
+  <% @node['shibboleth']['auths'].each do |location| -%>
+  <Location <%=location-%>>
+    AuthType shibboleth
+    ShibRequireSession On
+    ShibUseHeaders On
+    Require valid-user
+  </Location>
+  <% end #each -%>
+</VirtualHost>
