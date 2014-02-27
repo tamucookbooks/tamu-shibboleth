@@ -101,6 +101,18 @@ e.g.
     <td>Optional case modifier 'true' or 'false'</td>
     <td><tt>Optional</tt></td>
   </tr>
+  <tr>
+    <td><tt>['shibboleth']['certrepo']</tt></td>
+    <td>String</td>
+    <td>Local certificate repository keeps the shib certs and keys, which need to be named as servername-cer.pem and servername-key.pem</td>
+    <td><tt>'http://private.server/cert/'</tt></td>
+  </tr>
+  <tr>
+    <td><tt>['shibboleth']['fetchcert']</tt></td>
+    <td>Boolean</td>
+    <td>Whether to automatically fetch certificate for SP from 'certrepo'</td>
+    <td><tt>true</tt></td>
+  </tr>
 </table>
 
 Usage
