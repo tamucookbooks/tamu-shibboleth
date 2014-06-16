@@ -1,6 +1,6 @@
 [tamulib]
 name = TAMU Library Public Repository
-baseurl = ftp://public.library.tamu.edu/ftp/repo/tamulib/6/$basearch
+baseurl = ftp://public.library.tamu.edu/tamulib/6/$basearch
 enabled = 1
 protect = 0
 gpgcheck = 0
